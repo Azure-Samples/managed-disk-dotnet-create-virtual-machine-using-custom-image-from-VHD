@@ -4,8 +4,8 @@
 using Microsoft.Azure.Management.Compute.Fluent;
 using Microsoft.Azure.Management.Compute.Fluent.Models;
 using Microsoft.Azure.Management.Fluent;
-using Microsoft.Azure.Management.Resource.Fluent;
-using Microsoft.Azure.Management.Resource.Fluent.Core;
+using Microsoft.Azure.Management.ResourceManager.Fluent;
+using Microsoft.Azure.Management.ResourceManager.Fluent.Core;
 using Microsoft.Azure.Management.Samples.Common;
 using Renci.SshNet;
 using System;
@@ -17,7 +17,7 @@ namespace CreateVirtualMachineUsingCustomImageFromVHD
     {
         private static string userName = "tirekicker";
         private static string password = "12NewPA$$w0rd!";
-        private static Region region = Region.USWestCentral;
+        private static Region region = Region.USWest;
 
         /**
          * Azure Compute sample for managing virtual machines -
@@ -56,8 +56,8 @@ namespace CreateVirtualMachineUsingCustomImageFromVHD
                         .WithRegion(region)
                         .WithNewResourceGroup(rgName)
                         .WithNewPrimaryNetwork("10.0.0.0/28")
-                        .WithPrimaryPrivateIpAddressDynamic()
-                        .WithNewPrimaryPublicIpAddress(publicIpDnsLabel)
+                        .WithPrimaryPrivateIPAddressDynamic()
+                        .WithNewPrimaryPublicIPAddress(publicIpDnsLabel)
                         .WithPopularLinuxImage(KnownLinuxVirtualMachineImage.UbuntuServer16_04_Lts)
                         .WithRootUsername(userName)
                         .WithRootPassword(password)
@@ -89,7 +89,7 @@ namespace CreateVirtualMachineUsingCustomImageFromVHD
                 Utilities.PrintVirtualMachine(linuxVM);
 
                 // De-provision the virtual machine
-                DeprovisionAgentInLinuxVM(linuxVM.GetPrimaryPublicIpAddress().Fqdn, 22, userName, password);
+                Utilities.DeprovisionAgentInLinuxVM(linuxVM.GetPrimaryPublicIPAddress().Fqdn, 22, userName, password);
 
                 //=============================================================
                 // Deallocate the virtual machine
@@ -116,7 +116,7 @@ namespace CreateVirtualMachineUsingCustomImageFromVHD
                         .Define(customImageName)
                         .WithRegion(region)
                         .WithExistingResourceGroup(rgName)
-                        .WithLinuxFromVhd(linuxVM.OsUnmanagedDiskVhdUri, OperatingSystemStateTypes.Generalized)
+                        .WithLinuxFromVhd(linuxVM.OSUnmanagedDiskVhdUri, OperatingSystemStateTypes.Generalized)
                         .DefineDataDiskImage()
                             .WithLun(linuxVM.UnmanagedDataDisks[1].Lun)
                             .FromVhd(linuxVM.UnmanagedDataDisks[1].VhdUri)
@@ -145,8 +145,8 @@ namespace CreateVirtualMachineUsingCustomImageFromVHD
                         .WithRegion(region)
                         .WithExistingResourceGroup(rgName)
                         .WithNewPrimaryNetwork("10.0.0.0/28")
-                        .WithPrimaryPrivateIpAddressDynamic()
-                        .WithoutPrimaryPublicIpAddress()
+                        .WithPrimaryPrivateIPAddressDynamic()
+                        .WithoutPrimaryPublicIPAddress()
                         .WithLinuxCustomImage(virtualMachineCustomImage.Id)
                         .WithRootUsername(userName)
                         .WithRootPassword(password)
@@ -164,8 +164,8 @@ namespace CreateVirtualMachineUsingCustomImageFromVHD
                         .WithRegion(region)
                         .WithExistingResourceGroup(rgName)
                         .WithNewPrimaryNetwork("10.0.0.0/28")
-                        .WithPrimaryPrivateIpAddressDynamic()
-                        .WithoutPrimaryPublicIpAddress()
+                        .WithPrimaryPrivateIPAddressDynamic()
+                        .WithoutPrimaryPublicIPAddress()
                         .WithLinuxCustomImage(virtualMachineCustomImage.Id)
                         .WithRootUsername(userName)
                         .WithRootPassword(password)
@@ -191,7 +191,7 @@ namespace CreateVirtualMachineUsingCustomImageFromVHD
                 Utilities.Log("Getting OS and data disks SAS Uris");
 
                 // OS Disk SAS Uri
-                var osDisk = azure.Disks.GetById(linuxVM3.OsDiskId);
+                var osDisk = azure.Disks.GetById(linuxVM3.OSDiskId);
 
                 var osDiskSasUri = osDisk.GrantAccess(24 * 60);
 
@@ -231,30 +231,7 @@ namespace CreateVirtualMachineUsingCustomImageFromVHD
                 }
             }
         }
-
-        protected static void DeprovisionAgentInLinuxVM(string host, int port, string userName, string password)
-        {
-            try
-            {
-                using (var sshClient = new SshClient(host, port, userName, password))
-                {
-                    Utilities.Log("Trying to de-provision: " + host);
-                    sshClient.Connect();
-                    var commandToExecute = "sudo waagent -deprovision+user --force";
-                    using (var command = sshClient.CreateCommand(commandToExecute))
-                    {
-                        var commandOutput = command.Execute();
-                        Utilities.Log(commandOutput);
-                    }
-                    sshClient.Disconnect();
-                }
-            }
-            catch (Exception ex)
-            {
-                Utilities.Log(ex);
-            }
-        }
-
+        
         public static void Main(string[] args)
         {
             try
@@ -265,7 +242,7 @@ namespace CreateVirtualMachineUsingCustomImageFromVHD
 
                 var azure = Azure
                     .Configure()
-                    .WithLogLevel(HttpLoggingDelegatingHandler.Level.BASIC)
+                    .WithLogLevel(HttpLoggingDelegatingHandler.Level.Basic)
                     .Authenticate(credentials)
                     .WithDefaultSubscription();
 
