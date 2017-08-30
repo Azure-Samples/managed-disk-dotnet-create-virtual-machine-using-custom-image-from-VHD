@@ -1,0 +1,2 @@
+C:\Sources\dotnet-samples\managed-disk-dotnet-create-virtual-machine-using-custom-image-from-VHD\bin\Debug\netstandard1.6\CreateVirtualMachineUsingCustomImageFromVHD.deps.json
+C:\Sources\dotnet-samples\managed-disk-dotnet-create-virtual-machine-using-custom-image-from-VHD\obj\Debug\netstandard1.6\CreateVirtualMachineUsingCustomImageFromVHD.csproj.CoreCompileInputs.cache
